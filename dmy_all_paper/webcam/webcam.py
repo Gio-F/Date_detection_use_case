@@ -28,14 +28,9 @@ def main():
     while 1:
         start_time = time.time()
         ret_val, image = cam.read()
-        print("RET", ret_val)
         if image is not None:
-            print("IMMMM", image)
-            print("LENIMMM", len(image))
             stuff = coco_demo.run_on_opencv_image(image)
             cv2.imshow('Webcam', image)
-            print(stuff)
-            print("LEN",len(stuff))
             image, date_images, tl_info = stuff
             if date_images is not None:
                 image, rec_date, _ = detect_rec_dmy(image, date_images, tl_info)

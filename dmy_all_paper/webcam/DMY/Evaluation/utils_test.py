@@ -1,6 +1,6 @@
 # uncompyle6 version 3.8.0
 # Python bytecode 3.6 (3379)
-# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22) 
+# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
 # [GCC 10.2.1 20210110]
 # Embedded file name: /home/cagatay/PycharmProjects/Expiry/DMY/Evaluation/utils_test.py
 # Compiled at: 2021-12-17 08:51:04
@@ -60,7 +60,7 @@ def overlay_boxes(prd_date, prd_boxes, orig_img, tl_info):
         labels: day, month, and year labels for recognition results
     """
     colors = {'year':[
-      0, 0, 255], 
+      0, 0, 255],
      'month':[255, 255, 0],  'day':[0, 255, 0]}
     for label, date in prd_date.items():
         s = '{}:{}'.format(label[0], date)
@@ -264,7 +264,7 @@ def date_dictionary(predictions, dates):
     labels = predictions.get_field('labels')
     labels = [CATEGORIES[i] for i in labels]
     boxes = predictions.bbox.int().tolist()
-    dates = dates.split(' ')
+#    dates = dates.split(' ')
     dict_date, dict_box = {}, {}
     for idx, (box, label, date) in enumerate(zip(boxes, labels, dates)):
         dict_date[label] = date
@@ -403,8 +403,8 @@ def change_img_and_box(k, images, boxes, tl_corner):
 
 
 def digit_months(temp_date, date):
-    digit_months = {'JAN':1, 
-     'FEB':2,  'MAR':3,  'APR':4,  'MAY':5,  'JUN':6,  'JUL':7, 
+    digit_months = {'JAN':1,
+     'FEB':2,  'MAR':3,  'APR':4,  'MAY':5,  'JUN':6,  'JUL':7,
      'AUG':8,  'SEP':9,  'OCT':10,  'NOV':11,  'DEC':12}
     if 'month' in date:
         if date['month'].isalpha():
