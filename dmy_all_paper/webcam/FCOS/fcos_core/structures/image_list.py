@@ -2,14 +2,14 @@
 # Python bytecode 3.6 (3379)
 # Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
 # [GCC 10.2.1 20210110]
-# Embedded file name: /home/cagatay/PycharmProjects/ExpDateDetection/FCOS/fcos_core/structures/image_list.py
-# Compiled at: 2021-12-17 01:35:52
-# Size of source mod 2**32: 2493 bytes
+# Embedded file name: /home/cagatay/PycharmProjects/Expiry/FCOS/fcos_core/structures/image_list.py
+# Compiled at: 2021-12-16 06:36:40
+# Size of source mod 2**32: 2485 bytes
 from __future__ import division
 import torch
 
 class ImageList(object):
-    __doc__ = '\n    Structure that holds a list of images_det (of possibly\n    varying sizes) as a single tensor.\n    This works by padding the images_det to the same size,\n    and storing in a field the original sizes of each image\n    '
+    __doc__ = '\n    Structure that holds a list of images (of possibly\n    varying sizes) as a single tensor.\n    This works by padding the images to the same size,\n    and storing in a field the original sizes of each image\n    '
 
     def __init__(self, tensors, image_sizes):
         """
@@ -23,6 +23,7 @@ class ImageList(object):
     def to(self, *args, **kwargs):
         cast_tensor = (self.tensors.to)(*args, **kwargs)
         return ImageList(cast_tensor, self.image_sizes)
+
 
 def to_image_list(tensors, size_divisible=0):
     """
@@ -68,4 +69,4 @@ def to_image_list(tensors, size_divisible=0):
         return ImageList(batched_imgs, image_sizes)
     else:
         raise TypeError("Unsupported type for to_image_list: {}".format(type(tensors)))
-# okay decompiling ./image_list.pyc
+# okay decompiling ./fcos_core/structures/image_list.pyc

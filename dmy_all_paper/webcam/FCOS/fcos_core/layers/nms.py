@@ -2,8 +2,8 @@
 # Python bytecode 3.6 (3379)
 # Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
 # [GCC 10.2.1 20210110]
-# Embedded file name: /home/cagatay/PycharmProjects/ExpDateRecognition/DMY/Evaluation/nms.py
-# Compiled at: 2021-12-16 06:28:21
+# Embedded file name: /home/cagatay/PycharmProjects/Expiry/FCOS/fcos_core/layers/nms.py
+# Compiled at: 2021-12-16 06:36:40
 # Size of source mod 2**32: 232 bytes
 from detectron2.layers import batched_nms
 from detectron2.layers import nms as _nms
@@ -33,4 +33,5 @@ def ml_nms(boxlist, nms_thresh, max_proposals=-1,
     return boxlist
 
 nms = _nms
-# okay decompiling ./nms.pyc
+
+# okay decompiling ./fcos_core/layers/nms.pyc

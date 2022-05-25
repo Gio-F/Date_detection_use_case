@@ -1,41 +1,42 @@
 # uncompyle6 version 3.8.0
 # Python bytecode 3.6 (3379)
-# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
+# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22) 
 # [GCC 10.2.1 20210110]
-# Embedded file name: /home/cagatay/PycharmProjects/ExpDateDetection/FCOS/fcos_core/predictor.py
-# Compiled at: 2021-12-17 01:35:52
-# Size of source mod 2**32: 8361 bytes
-import cv2, torch, numpy as np, os, json
+# Embedded file name: /home/cagatay/PycharmProjects/Expiry/FCOS/fcos_core/predictor.py
+# Compiled at: 2021-12-16 06:36:40
+# Size of source mod 2**32: 14282 bytes
+import cv2, torch, numpy as np, copy
 from torchvision import transforms as T
 from FCOS.fcos_core.modeling.detector import build_detection_model
 from FCOS.fcos_core.utils.checkpoint import DetectronCheckpointer
 from FCOS.fcos_core.structures.image_list import to_image_list
+from FCOS.fcos_core import layers as L
+cnt = 1
 
 class COCODemo(object):
+    CATEGORIES = [
+     'background',
+     'code',
+     'due',
+     'exp',
+     'prod']
 
-    def __init__(self, cfg, confidence_thresholds_for_classes, min_image_size=224):
+    def __init__(self, cfg, confidence_thresholds_for_classes, show_mask_heatmaps=False, masks_per_dim=2, min_image_size=224):
         self.cfg = cfg.clone()
         self.model = build_detection_model(cfg)
         self.model.eval()
         self.device = torch.device(cfg.MODEL.DEVICE)
         self.model.to(self.device)
         self.min_image_size = min_image_size
-        checkpointer = DetectronCheckpointer(cfg, (self.model), save_dir=(cfg.OUTPUT_DIR))
+        save_dir = cfg.OUTPUT_DIR
+        checkpointer = DetectronCheckpointer(cfg, (self.model), save_dir=save_dir)
         _ = checkpointer.load(cfg.MODEL.WEIGHT)
         self.transforms = self.build_transform()
+        self.palette = torch.tensor([33554431, 32767, 2097151])
         self.cpu_device = torch.device('cpu')
         self.confidence_thresholds_for_classes = torch.tensor(confidence_thresholds_for_classes)
-        self.categories = [
-         'background',
-         'code',
-         'due',
-         'exp',
-         'prod']
-        self.colors = {'code':(255, 0, 0),
-         'due':(0, 128, 255),
-         'exp':(0, 255, 0),
-         'prod':(128, 0, 128)}
-        self.collect_cropped_names = {}
+        self.show_mask_heatmaps = show_mask_heatmaps
+        self.masks_per_dim = masks_per_dim
 
     def build_transform(self):
         """
@@ -56,26 +57,26 @@ class COCODemo(object):
          normalize_transform])
         return transform
 
-    def crop_boxes(self, img_name, img, boxes, labels):
+    @staticmethod
+    def crop_boxes(img, boxes):
         """
-        Crops expiration date candidate region.
+        Crops expiration date region.
         """
-        name_list = []
-        for idx, (box, label) in enumerate(zip(boxes, labels)):
-            if label == 3:
-                x1, y1, x2, y2 = box.cpu().numpy().astype(int)
-                tb, lr = (5, 5)
-                if x1 <= lr or y1 <= tb:
-                    cropped_img = img[y1:y2 + tb, x1:x2 + lr]
-                else:
-                    cropped_img = img[y1 - tb:y2 + tb, x1 - lr:x2 + lr]
-                if cropped_img is not None:
-                    name, ext = os.path.splitext(img_name)
-                    cv2.imwrite(f"images_rec/{name}_{idx:02}{ext}", cropped_img)
-                    name_list.append(f"{name}_{idx:02}{ext}")
-            self.collect_cropped_names[img_name] = name_list
+        cropped_img = []
+        tl_info = {}
+        tb, lr = (5, 5)
+        for idx, box in enumerate(boxes):
+            x1, y1, x2, y2 = box.int().cpu().numpy()
+            if x1 <= lr or y1 <= tb:
+                crop_img = img[y1:y2 + tb, x1:x2 + lr]
+            else:
+                crop_img = img[y1 - tb:y2 + tb, x1 - lr:x2 + lr]
+            cropped_img.append(crop_img)
+            tl_info[f"date_{idx + 1}"] = (x1 - lr, y1 - tb)
 
-    def run_on_opencv_image(self, name, image):
+        return (cropped_img, tl_info)
+
+    def run_on_opencv_image(self, image):
         """
         Arguments:
             image (np.ndarray): an image as returned by OpenCV
@@ -87,10 +88,16 @@ class COCODemo(object):
         """
         predictions = self.compute_prediction(image)
         top_predictions = self.select_top_predictions(predictions)
-        self.crop_boxes(name, image, top_predictions.bbox, top_predictions.extra_fields['labels'])
+        date_images = None
+        tl_info = None
+        if 3 in top_predictions.extra_fields['labels']:
+            exp_idx = torch.nonzero(top_predictions.extra_fields['labels'] == 3).squeeze()
+            exp_box = torch.index_select(top_predictions.bbox, 0, exp_idx)
+            date_images, tl_info = self.crop_boxes(image.copy(), exp_box)
         image = self.overlay_boxes(image, top_predictions)
         image = self.overlay_class_names(image, top_predictions)
-        return image
+        return (
+         image, date_images, tl_info)
 
     def compute_prediction(self, original_image):
         """
@@ -111,6 +118,10 @@ class COCODemo(object):
         prediction = predictions[0]
         height, width = original_image.shape[:-1]
         prediction = prediction.resize((width, height))
+        if prediction.has_field('mask'):
+            masks = prediction.get_field('mask')
+            masks = self.masker([masks], [prediction])[0]
+            prediction.add_field('mask', masks)
         return prediction
 
     def select_top_predictions(self, predictions):
@@ -136,6 +147,27 @@ class COCODemo(object):
         _, idx = scores.sort(0, descending=True)
         return predictions[idx]
 
+    @staticmethod
+    def compute_colors_for_labels(labels):
+        """
+        Simple function that adds fixed colors depending on the class
+        """
+        color_list = []
+        for label in labels:
+            if label == 1:
+                color_list.append(np.array([255, 0, 0]).astype('uint8'))
+            else:
+                if label == 2:
+                    color_list.append(np.array([0, 128, 255]).astype('uint8'))
+                else:
+                    if label == 3:
+                        color_list.append(np.array([0, 255, 0]).astype('uint8'))
+                    else:
+                        color_list.append(np.array([128, 0, 128]).astype('uint8'))
+
+        colors = np.array(color_list).reshape(-1, 3)
+        return colors
+
     def overlay_boxes(self, image, predictions):
         """
         Adds the predicted boxes on top of the image
@@ -146,13 +178,13 @@ class COCODemo(object):
                 It should contain the field `labels`.
         """
         labels = predictions.get_field('labels')
-        labels = [self.categories[i] for i in labels]
         boxes = predictions.bbox
-        for box, label in zip(boxes, labels):
-            box = box.to(torch.int64)
-            top_left, bottom_right = box[:2].tolist(), box[2:].tolist()
-            color = self.colors[label]
-            image = cv2.rectangle(image, tuple(top_left), tuple(bottom_right), tuple(color), 2)
+        colors = self.compute_colors_for_labels(labels).tolist()
+        for box, color, label in zip(boxes, colors, labels):
+            if label != 3:
+                box = box.to(torch.int64)
+                top_left, bottom_right = box[:2].tolist(), box[2:].tolist()
+                image = cv2.rectangle(image, tuple(top_left), tuple(bottom_right), tuple(color), 2)
 
         return image
 
@@ -168,19 +200,15 @@ class COCODemo(object):
         """
         scores = predictions.get_field('scores').tolist()
         labels = predictions.get_field('labels').tolist()
-        labels = [self.categories[i] for i in labels]
+        colors = self.compute_colors_for_labels(labels).tolist()
         boxes = predictions.bbox
         size = 0.8
         thick = 2
-        for box, score, label in zip(boxes, scores, labels):
-            x, y = box[:2].numpy().astype('int')
-            s = '{}: {:.2f}'.format(label, score)
-            color = self.colors[label]
-            cv2.putText(image, s, (x, y - 4), cv2.FONT_HERSHEY_SIMPLEX, size, color, thick)
+        for box, score, label, color in zip(boxes, scores, labels, colors):
+            if self.CATEGORIES[label] != 'exp':
+                x, y = box[:2].numpy().astype('int')
+                s = '{}'.format(self.CATEGORIES[label])
+                cv2.putText(image, s, (x, y - 4), cv2.FONT_HERSHEY_SIMPLEX, size, color, thick)
 
         return image
-
-    def save_cropped_names(self):
-        with open('images_rec/cropped_img_list.json', 'w') as (f):
-            json.dump((self.collect_cropped_names), f, indent=4)
-# okay decompiling ./predictor.pyc
+# okay decompiling ./fcos_core/predictor.pyc

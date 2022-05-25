@@ -1,6 +1,6 @@
 # uncompyle6 version 3.8.0
 # Python bytecode 3.6 (3379)
-# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22) 
+# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
 # [GCC 10.2.1 20210110]
 # Embedded file name: run.py
 import os, cv2, time, sys
@@ -31,7 +31,9 @@ def main():
     for idx, im_name in enumerate(image_name_list):
         start_time = time.time()
         image = cv2.imread(os.path.join(images_path, im_name))
+        print(image)
         result = coco_demo.run_on_opencv_image(im_name, image)
+        print(result)
         cv2.imwrite(f"results_det/{im_name}", result)
         print(f"{im_name}\tTime:{time.time() - start_time:.4f}")
 

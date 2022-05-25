@@ -1,14 +1,14 @@
 # uncompyle6 version 3.8.0
 # Python bytecode 3.6 (3379)
-# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
+# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22) 
 # [GCC 10.2.1 20210110]
-# Embedded file name: /home/cagatay/PycharmProjects/ExpDateRecognition/DMY/Evaluation/utils_test.py
-# Compiled at: 2021-12-17 12:32:50
-# Size of source mod 2**32: 15568 bytes
+# Embedded file name: /home/cagatay/PycharmProjects/Expiry/DMY/Evaluation/utils_test.py
+# Compiled at: 2021-12-17 08:51:04
+# Size of source mod 2**32: 17199 bytes
 import torch, torchvision
 from torchvision import transforms
-import numpy as np, cv2, datetime
-from DMY.Evaluation.bounding_box import BoxList
+import numpy as np, cv2
+from FCOS.fcos_core.structures.bounding_box import BoxList
 from PIL import Image
 CATEGORIES = [
  'background', 'day', 'month', 'year']
@@ -44,7 +44,7 @@ def sort_predictions(predictions):
     return predictions[idx]
 
 
-def overlay_boxes(image, predictions, boxes):
+def overlay_boxes(prd_date, prd_boxes, orig_img, tl_info):
     """
     Adds the predicted boxes on top of the image
 
@@ -54,20 +54,20 @@ def overlay_boxes(image, predictions, boxes):
         predictions (BoxList): the result of the computation by the model.
             It should contain the field `labels`.
         dates: recognized day, month, and year
-        exp_pred: top-left corner coordinate of the detected expiration date box
+        tl_info: top-left corner coordinate of the detected expiration date box
     Returns:
         orig_img: detection and recognition results on original image on the image as returned by OpenCV
         labels: day, month, and year labels for recognition results
     """
     colors = {'year':[
-      0, 0, 255],
+      0, 0, 255], 
      'month':[255, 255, 0],  'day':[0, 255, 0]}
-    for key, value in predictions.items():
-        color = colors[key]
-        x1, y1, x2, y2 = boxes[key]
-        image = cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
+    for label, date in prd_date.items():
+        s = '{}:{}'.format(label[0], date)
+        color = colors[label]
+        boxes_on_original_image(orig_img, prd_boxes[label], s, color, tl_info)
 
-    return image
+    return orig_img
 
 
 def select_top_one_per_class(top_predictions, size):
@@ -87,6 +87,9 @@ def select_top_one_per_class(top_predictions, size):
 
 
 def pick_highest_ones(labels, scores, boxes):
+    """
+    pick the highest score for each class
+    """
     pick_labels = []
     pick_scores = []
     pick_boxes = []
@@ -129,8 +132,6 @@ def pick_changing_label(overlapped, labels, scores):
                 changing_label = lab2
             else:
                 changing_label = lab1
-        else:
-            changing_label = lab1
     else:
         if lab1 in labels:
             changing_label = lab1
@@ -224,148 +225,25 @@ def crop_boxes(img, top_predictions, transforms):
     return torch.stack(crop_imgs, dim=0)
 
 
-def compare_years(temp_date, temp_img, temp_box, date, k, images, boxes):
-    if date['year'] > temp_date['year']:
-        temp_date = date
-        temp_img, temp_box = change_img_and_box(k, images, boxes)
-    else:
-        if date['year'] == temp_date['year']:
-            if 'month' in temp_date:
-                if 'month' in date:
-                    temp_date, temp_img, temp_box = compare_months(temp_date, temp_img, temp_box, date, k, images, boxes)
-    return (
-     temp_date, temp_img, temp_box)
+def boxes_on_original_image(img, bbox, s, color, tl_info):
+    """
+    Write final prediction results on the original image.
 
-
-def compare_months(temp_date, temp_img, temp_box, date, k, images, boxes):
-    temp_month, date_month = digit_months(temp_date, date)
-    if date_month > temp_month:
-        temp_date = date
-        temp_img, temp_box = change_img_and_box(k, images, boxes)
-    else:
-        if date['month'] == temp_date['month'] and 'day' in date and 'day' in temp_date and 'day' in temp_date:
-            if 'day' in date:
-                temp_date, temp_img, temp_box = compare_days(temp_date, temp_img, temp_box, date, k, images, boxes)
-    return (
-     temp_date, temp_img, temp_box)
-
-
-def compare_days(temp_date, temp_img, temp_box, date, k, images, boxes):
-    if date['day'] > temp_date['day']:
-        temp_date = date
-        temp_img, temp_box = change_img_and_box(k, images, boxes)
-    return (
-     temp_date, temp_img, temp_box)
-
-
-def change_img_and_box(k, images, boxes):
-    temp_img = images[k]
-    temp_box = boxes[k]
-    return (temp_img, temp_box)
-
-
-def digit_months(temp_date, date):
-    digit_months = {'JAN':1,
-     'FEB':2,  'MAR':3,  'APR':4,  'MAY':5,  'JUN':6,  'JUL':7,
-     'AUG':8,  'SEP':9,  'OCT':10,  'NOV':11,  'DEC':12}
-    if date['month'].isalpha():
-        date_month = digit_months[date['month']]
-    else:
-        date_month = date['month']
-    if temp_date['month'].isalpha():
-        temp_month = digit_months[temp_date['month']]
-    else:
-        temp_month = temp_date['month']
-    return (temp_month, date_month)
-
-
-def select_expiration_date(imgs, prds, bboxes):
-    images, dates, boxes = check_date_in_suitable_format(imgs, prds, bboxes)
-    if len(dates) > 1:
-        init_key = [
-         *images][0]
-        temp_img = images.pop(init_key)
-        temp_date = dates.pop(init_key)
-        temp_box = boxes.pop(init_key)
-        for k, date in dates.items():
-            if len(temp_date) == len(date):
-                if 'year' in temp_date and 'year' in date:
-                    temp_date, temp_img, temp_box = compare_years(temp_date, temp_img, temp_box, date, k, images, boxes)
-            elif 'month' in temp_date:
-                if 'month' in date:
-                    temp_date, temp_img, temp_box = compare_months(temp_date, temp_img, temp_box, date, k, images, boxes)
-            else:
-                if 'day' in temp_date:
-                    if 'day' in date:
-                        temp_date, temp_img, temp_box = compare_days(temp_date, temp_img, temp_box, date, k, images, boxes)
-                    if 'day' in date and 'month' in date:
-                        temp_date = date
-                        temp_img, temp_box = change_img_and_box(k, images, boxes)
-                else:
-                    if 'year' in temp_date:
-                        if 'year' in date:
-                            temp_date, temp_img, temp_box = compare_years(temp_date, temp_img, temp_box, date, k, images, boxes)
-                    if 'year' in date:
-                        temp_date = dates[k]
-                        temp_img, temp_box = change_img_and_box(k, images, boxes)
-                    else:
-                        if 'year' in temp_date:
-                            continue
-                        if 'month' in temp_date:
-                            if 'month' in date:
-                                temp_date, temp_img, temp_box = compare_months(temp_date, temp_img, temp_box, date, k, images, boxes)
-                        if 'month' in date:
-                            temp_date = dates[k]
-                            temp_img, temp_box = change_img_and_box(k, images, boxes)
-                        else:
-                            if 'month' in temp_date:
-                                continue
-                            print('bbb')
-
-        return (
-         temp_img, temp_date, temp_box)
-    else:
-        if len(dates) == 1:
-            for k, v in dates.items():
-                key = k
-
-            return (
-             images[key], dates[key], boxes[key])
-        return (None, None, None)
-
-
-def merge_date_labels(exp_date):
-    date, labels = [], []
-    for k, v in exp_date.items():
-        labels.append(k)
-        date.append(v)
-
-    return (' '.join(date), ','.join(labels))
-
-
-def check_date_in_suitable_format(images, dates, boxes):
-    months = [
-     'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-    delete = []
-    for k, v in dates.items():
-        if 'day' in v:
-            if not v['day'].isdigit() or not int(v['day']) < 32 or not len(v['day']) == 2:
-                delete.append(k)
-            if 'month' in v:
-                if v['month'].isdigit():
-                    if not int(v['month']) < 13 or not (len(v['month']) == 2 or len(v['month']) == 3):
-                        delete.append(k)
-                elif v['month'] not in months or not (len(v['month']) == 2 or len(v['month']) == 3):
-                    delete.append(k)
-            if 'year' in v and (not v['year'].isdigit() or not (len(v['year']) == 2 or len(v['year']) == 4)):
-                delete.append(k)
-
-    for d in set(delete):
-        del dates[d]
-        del images[d]
-        del boxes[d]
-
-    return (images, dates, boxes)
+    Arguments:
+        img: original image
+        prd_tl: top-left corner coordinates of expiration date detection box
+        bbox: predicted day, month, and year boxes
+        s2: class and recognition results
+        color: color values
+    """
+    x, y = tl_info
+    x1, y1, x2, y2 = bbox
+    x1 += x
+    y1 += y
+    x2 += x
+    y2 += y
+    img = cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+    cv2.putText(img, s, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)
 
 
 def date_dictionary(predictions, dates):
@@ -386,7 +264,7 @@ def date_dictionary(predictions, dates):
     labels = predictions.get_field('labels')
     labels = [CATEGORIES[i] for i in labels]
     boxes = predictions.bbox.int().tolist()
-    #dates = dates.split(' ')
+    dates = dates.split(' ')
     dict_date, dict_box = {}, {}
     for idx, (box, label, date) in enumerate(zip(boxes, labels, dates)):
         dict_date[label] = date
@@ -394,6 +272,150 @@ def date_dictionary(predictions, dates):
 
     return (
      dict_date, dict_box)
+
+
+def select_expiration_date(imgs, prds, bboxes, tl_info):
+    images, dates, boxes, tl_corner = check_date_in_suitable_format(imgs, prds, bboxes, tl_info)
+    if len(dates) > 1:
+        init_key = [
+         *images][0]
+        temp_img = images.pop(init_key)
+        temp_date = dates.pop(init_key)
+        temp_box = boxes.pop(init_key)
+        temp_tl_corner = tl_corner.pop(init_key)
+        for k, date in dates.items():
+            if len(temp_date) == len(date):
+                if 'year' in temp_date:
+                    if 'year' in date:
+                        temp_date, temp_img, temp_box, temp_tl_corner = compare_years(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner)
+                if 'month' in temp_date:
+                    if 'month' in date:
+                        temp_date, temp_img, temp_box, temp_tl_corner = compare_months(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner)
+                if 'day' in temp_date and 'day' in date:
+                    temp_date, temp_img, temp_box, temp_tl_corner = compare_days(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner)
+                elif 'day' in date and 'month' in date:
+                    temp_date = date
+                    temp_img, temp_box, temp_tl_corner = change_img_and_box(k, images, boxes, tl_corner)
+            elif 'year' in temp_date and 'year' in date:
+                temp_date, temp_img, temp_box, temp_tl_corner = compare_years(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner)
+            else:
+                if 'year' in date:
+                    temp_date = dates[k]
+                    temp_img, temp_box, temp_tl_corner = change_img_and_box(k, images, boxes, tl_corner)
+                else:
+                    if 'year' in temp_date:
+                        continue
+                        if 'month' in temp_date:
+                            if 'month' in date:
+                                temp_date, temp_img, temp_box, temp_tl_corner = compare_months(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner)
+                        if 'month' in date:
+                            temp_date = dates[k]
+                            temp_img, temp_box, temp_tl_corner = change_img_and_box(k, images, boxes, tl_corner)
+                        elif 'month' in temp_date:
+                            continue
+
+        return (
+         temp_img, temp_date, temp_box, temp_tl_corner)
+    else:
+        if len(dates) == 1:
+            for k, v in dates.items():
+                key = k
+
+            return (
+             images[key], dates[key], boxes[key], tl_corner[key])
+        return (None, None, None, None)
+
+
+def merge_date_labels(exp_date):
+    date, labels = [], []
+    for k, v in exp_date.items():
+        labels.append(k)
+        date.append(v)
+
+    return (' '.join(date), ','.join(labels))
+
+
+def check_date_in_suitable_format(images, dates, boxes, tl_info):
+    months = [
+     'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    delete = []
+    for k, v in dates.items():
+        if 'day' in v:
+            if not v['day'].isdigit() or not int(v['day']) < 32 or not len(v['day']) == 2:
+                delete.append(k)
+            if 'month' in v:
+                if v['month'].isdigit():
+                    if not int(v['month']) < 13 or not (len(v['month']) == 2 or len(v['month']) == 3):
+                        delete.append(k)
+                elif v['month'] not in months or not (len(v['month']) == 2 or len(v['month']) == 3):
+                    delete.append(k)
+            if 'year' in v and (not v['year'].isdigit() or not (len(v['year']) == 2 or len(v['year']) == 4)):
+                delete.append(k)
+
+    for d in set(delete):
+        del dates[d]
+        del images[d]
+        del boxes[d]
+        del tl_info[d]
+
+    return (images, dates, boxes, tl_info)
+
+
+def compare_years(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner):
+    if date['year'] > temp_date['year']:
+        temp_date = date
+        temp_img, temp_box, temp_tl_corner = change_img_and_box(k, images, boxes, tl_corner)
+    else:
+        if date['year'] == temp_date['year']:
+            if 'month' in temp_date:
+                if 'month' in date:
+                    temp_date, temp_img, temp_box, temp_tl_corner = compare_months(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner)
+    return (
+     temp_date, temp_img, temp_box, temp_tl_corner)
+
+
+def compare_months(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner):
+    temp_month, date_month = digit_months(temp_date, date)
+    if date_month > temp_month:
+        temp_date = date
+        temp_img, temp_box, temp_tl_corner = change_img_and_box(k, images, boxes, tl_corner)
+    else:
+        if date['month'] == temp_date['month'] and 'day' in date and 'day' in temp_date and 'day' in temp_date:
+            if 'day' in date:
+                temp_date, temp_img, temp_box, temp_tl_corner = compare_days(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner)
+    return (
+     temp_date, temp_img, temp_box, temp_tl_corner)
+
+
+def compare_days(temp_date, temp_img, temp_box, temp_tl_corner, date, k, images, boxes, tl_corner):
+    if date['day'] > temp_date['day']:
+        temp_date = date
+        temp_img, temp_box, temp_tl_corner = change_img_and_box(k, images, boxes, tl_corner)
+    return (
+     temp_date, temp_img, temp_box, temp_tl_corner)
+
+
+def change_img_and_box(k, images, boxes, tl_corner):
+    temp_img = images[k]
+    temp_box = boxes[k]
+    temp_tl_corner = tl_corner[k]
+    return (temp_img, temp_box, temp_tl_corner)
+
+
+def digit_months(temp_date, date):
+    digit_months = {'JAN':1, 
+     'FEB':2,  'MAR':3,  'APR':4,  'MAY':5,  'JUN':6,  'JUL':7, 
+     'AUG':8,  'SEP':9,  'OCT':10,  'NOV':11,  'DEC':12}
+    if 'month' in date:
+        if date['month'].isalpha():
+            date_month = digit_months[date['month']]
+        else:
+            date_month = date['month']
+    elif 'month' in temp_date and temp_date['month'].isalpha():
+        temp_month = digit_months[temp_date['month']]
+    else:
+        temp_month = temp_date['month']
+    return (int(temp_month), int(date_month))
 
 
 def box_area(boxes):
@@ -431,4 +453,4 @@ def box_iou(boxes1, boxes2):
     inter = wh[:, :, 0] * wh[:, :, 1]
     iou = inter / (area1[:, None] + area2 - inter)
     return iou
-# okay decompiling ./utils_test.pyc
+# okay decompiling ./Evaluation/utils_test.pyc

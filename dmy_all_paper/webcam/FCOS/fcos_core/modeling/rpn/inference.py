@@ -2,25 +2,38 @@
 # Python bytecode 3.6 (3379)
 # Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
 # [GCC 10.2.1 20210110]
-# Embedded file name: /home/cagatay/PycharmProjects/ExpDateRecognition/DMY/Evaluation/predictor.py
-# Compiled at: 2021-12-16 06:28:21
-# Size of source mod 2**32: 5444 bytes
+# Embedded file name: /home/cagatay/PycharmProjects/Expiry/FCOS/fcos_core/modeling/rpn/inference.py
+# Compiled at: 2021-12-16 06:36:40
+# Size of source mod 2**32: 6772 bytes
 import torch
-from DMY.Evaluation.bounding_box import BoxList
-from DMY.Evaluation.boxlist_ops import cat_boxlist, boxlist_ml_nms, boxlist_nms, remove_small_boxes
+from FCOS.fcos_core.structures.bounding_box import BoxList
+from FCOS.fcos_core.structures.boxlist_ops import cat_boxlist
+from FCOS.fcos_core.structures.boxlist_ops import boxlist_ml_nms, boxlist_nms
+from FCOS.fcos_core.structures.boxlist_ops import remove_small_boxes
 
-class PostProcessor(torch.nn.Module):
+class FCOSPostProcessor(torch.nn.Module):
     __doc__ = '\n    Performs post-processing on the outputs of the RetinaNet boxes.\n    This is only used in the testing.\n    '
 
-    def __init__(self):
-        super(PostProcessor, self).__init__()
-        self.pre_nms_thresh = 0.2
-        self.pre_nms_top_n = 100
-        self.nms_thresh = 0.6
-        self.fpn_post_nms_top_n = 100
-        self.min_size = 0
+    def __init__(self, pre_nms_thresh, pre_nms_top_n, nms_thresh, fpn_post_nms_top_n, min_size, num_classes, bbox_aug_enabled=False):
+        """
+        Arguments:
+            pre_nms_thresh (float)
+            pre_nms_top_n (int)
+            nms_thresh (float)
+            fpn_post_nms_top_n (int)
+            min_size (int)
+            num_classes (int)
+        """
+        super(FCOSPostProcessor, self).__init__()
+        self.pre_nms_thresh = pre_nms_thresh
+        self.pre_nms_top_n = pre_nms_top_n
+        self.nms_thresh = nms_thresh
+        self.fpn_post_nms_top_n = fpn_post_nms_top_n
+        self.min_size = min_size
+        self.num_classes = num_classes
+        self.bbox_aug_enabled = bbox_aug_enabled
 
-    def forward_for_single_feature_map(self, locations, box_cls, box_regression, centerness, size):
+    def forward_for_single_feature_map(self, locations, box_cls, box_regression, centerness, image_sizes):
         """
         Arguments:
             anchors: list[BoxList]
@@ -28,7 +41,6 @@ class PostProcessor(torch.nn.Module):
             box_regression: tensor of size N, A * 4, H, W
         """
         N, C, H, W = box_cls.shape
-        box_cls = box_cls.reshape(N, C, H, W)
         box_cls = box_cls.view(N, C, H, W).permute(0, 2, 3, 1)
         box_cls = box_cls.reshape(N, -1, C).sigmoid()
         box_regression = box_regression.view(N, 4, H, W).permute(0, 2, 3, 1)
@@ -62,8 +74,8 @@ class PostProcessor(torch.nn.Module):
              per_locations[:, 0] + per_box_regression[:, 2],
              per_locations[:, 1] + per_box_regression[:, 3]],
               dim=1)
-            h, w = size[0], size[1]
-            boxlist = BoxList(detections, (w, h), mode='xyxy')
+            h, w = image_sizes[i]
+            boxlist = BoxList(detections, (int(w), int(h)), mode='xyxy')
             boxlist.add_field('labels', per_class)
             boxlist.add_field('scores', torch.sqrt(per_box_cls))
             boxlist = boxlist.clip_to_image(remove_empty=False)
@@ -72,7 +84,7 @@ class PostProcessor(torch.nn.Module):
 
         return results
 
-    def forward(self, locations, box_cls, box_regression, centerness, size):
+    def forward(self, locations, box_cls, box_regression, centerness, image_sizes):
         """
         Arguments:
             anchors: list[list[BoxList]]
@@ -84,12 +96,13 @@ class PostProcessor(torch.nn.Module):
                 applying box decoding and NMS
         """
         sampled_boxes = []
-        for idx_1, (l, o, b, c) in enumerate(zip(locations, box_cls, box_regression, centerness)):
-            sampled_boxes.append(self.forward_for_single_feature_map(l, o, b, c, size))
+        for _, (l, o, b, c) in enumerate(zip(locations, box_cls, box_regression, centerness)):
+            sampled_boxes.append(self.forward_for_single_feature_map(l, o, b, c, image_sizes))
 
         boxlists = list(zip(*sampled_boxes))
         boxlists = [cat_boxlist(boxlist) for boxlist in boxlists]
-        boxlists = self.select_over_all_levels(boxlists)
+        if not self.bbox_aug_enabled:
+            boxlists = self.select_over_all_levels(boxlists)
         return boxlists
 
     def select_over_all_levels(self, boxlists):
@@ -102,7 +115,6 @@ class PostProcessor(torch.nn.Module):
             else:
                 result = boxlist_nms(boxlists[i], self.nms_thresh)
             number_of_detections = len(result)
-            number_of_detections = len(result)
             if number_of_detections > self.fpn_post_nms_top_n > 0:
                 cls_scores = result.get_field('scores')
                 image_thresh, _ = torch.kthvalue(cls_scores.cpu(), number_of_detections - self.fpn_post_nms_top_n + 1)
@@ -112,4 +124,20 @@ class PostProcessor(torch.nn.Module):
             results.append(result)
 
         return results
-# okay decompiling ./predictor.pyc
+
+
+def make_fcos_postprocessor(config):
+    pre_nms_thresh = config.MODEL.FCOS.INFERENCE_TH
+    pre_nms_top_n = config.MODEL.FCOS.PRE_NMS_TOP_N
+    nms_thresh = config.MODEL.FCOS.NMS_TH
+    fpn_post_nms_top_n = config.TEST.DETECTIONS_PER_IMG
+    bbox_aug_enabled = config.TEST.BBOX_AUG.ENABLED
+    box_selector = FCOSPostProcessor(pre_nms_thresh=pre_nms_thresh,
+      pre_nms_top_n=pre_nms_top_n,
+      nms_thresh=nms_thresh,
+      fpn_post_nms_top_n=fpn_post_nms_top_n,
+      min_size=0,
+      num_classes=(config.MODEL.FCOS.NUM_CLASSES),
+      bbox_aug_enabled=bbox_aug_enabled)
+    return box_selector
+# okay decompiling ./fcos_core/modeling/rpn/inference.pyc

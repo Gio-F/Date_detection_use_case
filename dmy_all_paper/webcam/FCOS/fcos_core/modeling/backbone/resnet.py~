@@ -1,9 +1,9 @@
 # uncompyle6 version 3.8.0
 # Python bytecode 3.6 (3379)
-# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
+# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22) 
 # [GCC 10.2.1 20210110]
-# Embedded file name: /home/cagatay/PycharmProjects/ExpDateDetection/FCOS/fcos_core/modeling/backbone/resnet.py
-# Compiled at: 2021-12-17 01:35:52
+# Embedded file name: /home/cagatay/PycharmProjects/Expiry/FCOS/fcos_core/modeling/backbone/resnet.py
+# Compiled at: 2021-12-16 06:36:40
 # Size of source mod 2**32: 14173 bytes
 """
 Variant of the resnet module that takes cfg as an argument.
@@ -90,8 +90,8 @@ class ResNet(nn.Module):
               num_groups,
               (cfg.MODEL.RESNETS.STRIDE_IN_1X1),
               first_stride=(int(stage_spec.index > 1) + 1),
-              dcn_config={'stage_with_dcn':stage_with_dcn,
-             'with_modulated_dcn':cfg.MODEL.RESNETS.WITH_MODULATED_DCN,
+              dcn_config={'stage_with_dcn':stage_with_dcn, 
+             'with_modulated_dcn':cfg.MODEL.RESNETS.WITH_MODULATED_DCN, 
              'deformable_groups':cfg.MODEL.RESNETS.DEFORMABLE_GROUPS})
             in_channels = out_channels
             self.add_module(name, module)
@@ -195,42 +195,42 @@ class Bottleneck(nn.Module):
                     if isinstance(l, Conv2d):
                         nn.init.kaiming_uniform_((l.weight), a=1)
 
-        if dilation > 1:
-            stride = 1
-        stride_1x1, stride_3x3 = (stride, 1) if stride_in_1x1 else (1, stride)
-        self.conv1 = Conv2d(in_channels,
-                            bottleneck_channels,
-                            kernel_size=1,
-                            stride=stride_1x1,
-                            bias=False)
-        nn.init.kaiming_uniform_((self.conv1.weight), a=1)
-        self.bn1 = norm_func(bottleneck_channels)
-        with_dcn = dcn_config.get('stage_with_dcn', False)
-        if with_dcn:
-            deformable_groups = dcn_config.get('deformable_groups', 1)
-            with_modulated_dcn = dcn_config.get('with_modulated_dcn', False)
-            self.conv2 = DFConv2d(bottleneck_channels,
-                                  bottleneck_channels,
-                                  with_modulated_dcn=with_modulated_dcn,
-                                  kernel_size=3,
-                                  stride=stride_3x3,
-                                  groups=num_groups,
-                                  dilation=dilation,
-                                  deformable_groups=deformable_groups,
-                                  bias=False)
         else:
-            self.conv2 = Conv2d(bottleneck_channels,
-                                bottleneck_channels,
-                                kernel_size=3,
-                                stride=stride_3x3,
-                                padding=dilation,
-                                bias=False,
-                                groups=num_groups,
-                                dilation=dilation)
-            nn.init.kaiming_uniform_((self.conv2.weight), a=1)
+            if dilation > 1:
+                stride = 1
+            stride_1x1, stride_3x3 = (stride, 1) if stride_in_1x1 else (1, stride)
+            self.conv1 = Conv2d(in_channels,
+              bottleneck_channels,
+              kernel_size=1,
+              stride=stride_1x1,
+              bias=False)
+            self.bn1 = norm_func(bottleneck_channels)
+            with_dcn = dcn_config.get('stage_with_dcn', False)
+            if with_dcn:
+                deformable_groups = dcn_config.get('deformable_groups', 1)
+                with_modulated_dcn = dcn_config.get('with_modulated_dcn', False)
+                self.conv2 = DFConv2d(bottleneck_channels,
+                  bottleneck_channels,
+                  with_modulated_dcn=with_modulated_dcn,
+                  kernel_size=3,
+                  stride=stride_3x3,
+                  groups=num_groups,
+                  dilation=dilation,
+                  deformable_groups=deformable_groups,
+                  bias=False)
+            else:
+                self.conv2 = Conv2d(bottleneck_channels,
+                  bottleneck_channels,
+                  kernel_size=3,
+                  stride=stride_3x3,
+                  padding=dilation,
+                  bias=False,
+                  groups=num_groups,
+                  dilation=dilation)
+                nn.init.kaiming_uniform_((self.conv2.weight), a=1)
         self.bn2 = norm_func(bottleneck_channels)
         self.conv3 = Conv2d(bottleneck_channels,
-                            out_channels, kernel_size=1, bias=False)
+          out_channels, kernel_size=1, bias=False)
         self.bn3 = norm_func(out_channels)
         for l in [self.conv1, self.conv3]:
             nn.init.kaiming_uniform_((l.weight), a=1)
@@ -312,17 +312,17 @@ class StemWithGN(BaseStem):
         super(StemWithGN, self).__init__(cfg, norm_func=group_norm)
 
 
-_TRANSFORMATION_MODULES = Registry({'BottleneckWithFixedBatchNorm':BottleneckWithFixedBatchNorm,
+_TRANSFORMATION_MODULES = Registry({'BottleneckWithFixedBatchNorm':BottleneckWithFixedBatchNorm, 
  'BottleneckWithGN':BottleneckWithGN})
-_STEM_MODULES = Registry({'StemWithFixedBatchNorm':StemWithFixedBatchNorm,
+_STEM_MODULES = Registry({'StemWithFixedBatchNorm':StemWithFixedBatchNorm, 
  'StemWithGN':StemWithGN})
-_STAGE_SPECS = Registry({'R-50-C4':ResNet50StagesTo4,
- 'R-50-C5':ResNet50StagesTo5,
- 'R-101-C4':ResNet101StagesTo4,
- 'R-101-C5':ResNet101StagesTo5,
- 'R-50-FPN':ResNet50FPNStagesTo5,
- 'R-50-FPN-RETINANET':ResNet50FPNStagesTo5,
- 'R-101-FPN':ResNet101FPNStagesTo5,
- 'R-101-FPN-RETINANET':ResNet101FPNStagesTo5,
+_STAGE_SPECS = Registry({'R-50-C4':ResNet50StagesTo4, 
+ 'R-50-C5':ResNet50StagesTo5, 
+ 'R-101-C4':ResNet101StagesTo4, 
+ 'R-101-C5':ResNet101StagesTo5, 
+ 'R-50-FPN':ResNet50FPNStagesTo5, 
+ 'R-50-FPN-RETINANET':ResNet50FPNStagesTo5, 
+ 'R-101-FPN':ResNet101FPNStagesTo5, 
+ 'R-101-FPN-RETINANET':ResNet101FPNStagesTo5, 
  'R-152-FPN':ResNet152FPNStagesTo5})
-# okay decompiling ./resnet.pyc
+# okay decompiling ./fcos_core/modeling/backbone/resnet.pyc

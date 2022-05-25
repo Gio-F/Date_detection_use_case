@@ -1,6 +1,6 @@
 # uncompyle6 version 3.8.0
 # Python bytecode 3.6 (3379)
-# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22) 
+# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
 # [GCC 10.2.1 20210110]
 # Embedded file name: webcam.py
 import cv2, torch, time, sys
@@ -28,8 +28,15 @@ def main():
     while 1:
         start_time = time.time()
         ret_val, image = cam.read()
+        print("RET", ret_val)
         if image is not None:
-            image, date_images, tl_info = coco_demo.run_on_opencv_image(image)
+            print("IMMMM", image)
+            print("LENIMMM", len(image))
+            stuff = coco_demo.run_on_opencv_image(image)
+            cv2.imshow('Webcam', image)
+            print(stuff)
+            print("LEN",len(stuff))
+            image, date_images, tl_info = stuff
             if date_images is not None:
                 image, rec_date, _ = detect_rec_dmy(image, date_images, tl_info)
                 print('Time: {:.2f} sec/img\tPredicted Date: {}'.format(time.time() - start_time, rec_date))

@@ -2,8 +2,8 @@
 # Python bytecode 3.6 (3379)
 # Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
 # [GCC 10.2.1 20210110]
-# Embedded file name: /home/cagatay/PycharmProjects/ExpDateDetection/FCOS/fcos_core/modeling/backbone/resnet.py
-# Compiled at: 2021-12-17 01:35:52
+# Embedded file name: /home/cagatay/PycharmProjects/Expiry/FCOS/fcos_core/modeling/backbone/resnet.py
+# Compiled at: 2021-12-16 06:36:40
 # Size of source mod 2**32: 14173 bytes
 """
 Variant of the resnet module that takes cfg as an argument.
@@ -325,4 +325,4 @@ _STAGE_SPECS = Registry({'R-50-C4':ResNet50StagesTo4,
  'R-101-FPN':ResNet101FPNStagesTo5,
  'R-101-FPN-RETINANET':ResNet101FPNStagesTo5,
  'R-152-FPN':ResNet152FPNStagesTo5})
-# okay decompiling ./resnet.pyc
+# okay decompiling ./fcos_core/modeling/backbone/resnet.pyc

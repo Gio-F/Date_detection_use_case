@@ -1,10 +1,10 @@
 # uncompyle6 version 3.8.0
 # Python bytecode 3.6 (3379)
-# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22)
+# Decompiled from: Python 3.6.15 (default, Dec 21 2021, 12:03:22) 
 # [GCC 10.2.1 20210110]
-# Embedded file name: /home/cagatay/PycharmProjects/ExpDateRecognition/DMY/dt_and_rec.py
-# Compiled at: 2021-12-16 06:28:21
-# Size of source mod 2**32: 3925 bytes
+# Embedded file name: /home/cagatay/PycharmProjects/Expiry/DMY/dt_and_rec.py
+# Compiled at: 2021-12-16 06:36:40
+# Size of source mod 2**32: 4229 bytes
 from torchvision import transforms as T
 from DMY.Evaluation.utils_test import *
 from DMY.Evaluation.predictor import PostProcessor
@@ -27,14 +27,19 @@ class DetectRecognizeDmy:
          T.ToTensor()])
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    def __call__(self, dmy_images):
+    def convert2BGR(self, image, width, height):
+        img = image[0].permute(1, 2, 0).cpu().numpy()
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        img = cv2.resize(img, (width, height), interpolation=(cv2.INTER_AREA))
+        return img
+
+    def __call__(self, orig_image, dmy_images, tl_info):
         """
         First detects day, month, and year components. Then, recognized the characters in the detected components.
-
         Arguments:
             orig_image: original input image as returned by OpenCV
             dmy_image: detected expiration date region
-            exp_pred: top-left corner coordinate of the detected expiration date box
+            tl_info: top-left corner coordinate of the detected expiration date box
             models: dmy detection (model_dmy) and recognition networks (model_fe, model_cam, model_dtd)
         Return:
             final_img: detection and recognition results on original image
@@ -67,11 +72,11 @@ class DetectRecognizeDmy:
                 collect_prd_date[f"date_{idx + 1}"] = dict_date
                 collect_box[f"date_{idx + 1}"] = dict_box
 
-        final_img, prd_date, prd_boxes = select_expiration_date(collect_images, collect_prd_date, collect_box)
+        final_img, prd_date, prd_boxes, tl_corner = select_expiration_date(collect_images, collect_prd_date, collect_box, tl_info)
         labels = None
         if final_img is not None:
-            final_img = overlay_boxes(final_img, prd_date, prd_boxes)
+            orig_image = overlay_boxes(prd_date, prd_boxes, orig_image, tl_corner)
             prd_date, labels = merge_date_labels(prd_date)
         return (
-         final_img, prd_date, labels)
+         orig_image, prd_date, labels)
 # okay decompiling ./dt_and_rec.pyc
