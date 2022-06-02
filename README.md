@@ -5,7 +5,7 @@
 
 ### Google Slide : <a href = "https://docs.google.com/presentation/d/1iUTxgMxoM8ksWDiEEi6FDIrjziW8CG4084umJv1IDWk/edit#slide=id.p"> Presentation<br><br>
   
-<p align="center"><img src="![image](https://user-images.githubusercontent.com/96992159/171580810-6a099e5e-5ab2-48a1-816b-d4c50fb4ab48.png)" width="800" height="400"></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/96992159/171581686-abe8d723-a103-4a03-b9c7-2a2f6543fd04.png" width="800" height="400"></p>
 
 
 
