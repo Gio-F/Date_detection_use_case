@@ -24,7 +24,6 @@ class Stream(object):
         self.stream = cv2.VideoCapture(-1)
     
         
-
     def stop(self):
         self.stream.release()
         cv2.destroyAllWindows()
@@ -43,19 +42,21 @@ class Stream(object):
             print("failed to save picture. Could not read image (self.stream.read())")
 
     def save_picture_camera(self):
-        frame = self.get_frame()
-        #nparr = np.fromstring(frame, np.uint8)
-        #image = cv2.imdecode(nparr, cv2.CV_LOAD_IMAGE_COLOR) 
-        print("save picture camera function")
-        try:
-            cv2.imwrite("/static/Images/picture1.jpg",frame)
-        except:
-            print("SAVING PICTURE1.jpg didn't work")
-        print("Picture saved!")
-        self.stop()
+        ret,image = self.stream.read()
+        print(ret)
+        if ret == True:
+            image = cv2.imdecode(np.frombuffer(image, np.uint8),cv2.IMREAD_COLOR)
+            cv2.imwrite("../static/Images/picture1.jpg",image)
+            print("Picture saved!")
+            self.stop()
+        else:
+            print("failed to save picture. Could not read image (self.stream.read())")
     
+    def read_stream(self):
+        ret,image = self.stream.read()
+        return ret,image
 
-    
+
     def load_picture(self,picture):
         print("load picture")
         image = cv2.imread(picture)

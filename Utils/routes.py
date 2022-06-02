@@ -40,7 +40,7 @@ class Routes():
         self.time_prediction = None # Time prediction of the image showing the expire date of the image
         self.source_filename = None # filename of the image that is uploaded via picture link
        
-        
+
     def create(self):
         print("Create main routes")
         self.start()
@@ -335,16 +335,15 @@ class Routes():
         async def handle_form(request:Request, my_picture_file:UploadFile = File(...)):
             print("type of file : ",my_picture_file.content_type)
             print("name of the file : ",my_picture_file.filename)
-            #filename = my_picture_file.filename
 
             file = await my_picture_file.read()
             print("type of file : ",type(file))
             print("my_picture_file: ",type(my_picture_file))
-            #print("my_picture_file.file: ",type(my_picture_file.file))
             self.source_filename = "picture2.jpg"
             image = cv2.imdecode(np.frombuffer(file, np.uint8),cv2.IMREAD_COLOR)
             cv2.imwrite("./static/Images/" + self.source_filename,image)
             print("Picture saved in 'picture2.jpg'")
+            print("TYPE OF IMAGE : ",type(image))
             self.image = image
             self.detect_date()
             context = {"request":request}
@@ -356,21 +355,29 @@ class Routes():
 
         @app.post("/show_picture",response_class=HTMLResponse)
         async def show_picture(request:Request):
-            self.stream.save_picture_camera()
-            
+            #self.stream.save_picture_camera()
+            print("ENTER IN THE SHOW PICTURE")
+            print("self.stream : ",type(self.stream))
+            print("stream.get_frame : ",type(self.stream.get_frame()))
+            ret,image2 = self.stream.read_stream()
+            print("image2 : ",type(image2))
+            ret,jpeg = cv2.imencode(".jpg",image2)
+            print("jpeg : ",type(jpeg))
+            tobytes = jpeg.tobytes()
+            print("tobytes : ",type(tobytes))
             filename = "picture1.jpg"
-            path = "../static/Images/"+filename
-            image = cv2.imread(path)
-            print("Picture 'picture1.jpg' read")
-            self.image = image #detect_date() need self.image
-            #cv2.imwrite("./static/Images/" + filename,image)
-            
+            self.image = image2 #detect_date() need self.image
+            root = "/static/Images/"
+            path = root + filename
+            print("path : ",path)
+            cv2.imwrite(path,image2)
+            print("Picture saved in 'picture1.jpg'")
             self.detect_date()
             context = {"request":request}
             context["filename"] = filename
             context["prediction"] = self.prediction
             context["time_prediction"] = round(float(self.time_prediction),2)
-            context["source_filename"] = self.source_filename
+            context["image"] = image2
             return templates.TemplateResponse("detected.html",context)
 
         

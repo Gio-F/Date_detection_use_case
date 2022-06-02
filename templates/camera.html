@@ -40,7 +40,10 @@
             <div id="card_text" class="card-body">
               <h5 class="card-title">Real Frame</h5>
               <p id="text_to_show" class="card-text"></p>
-              <button id="my_button_picture" class="btn btn-danger">Take a picture</button>
+              <!-- <button id="my_button_picture" class="btn btn-danger">Take a picture</button> -->
+              <form action="/show_picture" method="post" enctype="multipart/form-data">
+              <button id="button-load-image" type="submit" class="btn btn-danger" style="width:60%;margin-top: 20px;">Take a picture</button>
+              </form>
             </div>
           </div>
             
