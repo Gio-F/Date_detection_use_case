@@ -11,8 +11,9 @@ An API that detect expiration date from the product package's picture based on D
 
 - Duration:  10 days 
 - Deadline:  03.06.22
-
-### Installation
+  
+## Installation
+  
 - Python 3.8.10
 - Python 3.9.5 
 - Open CV
@@ -21,6 +22,7 @@ An API that detect expiration date from the product package's picture based on D
 - Pytesseract
 - Uvicorn
 - Jinja
+
 
 
 
