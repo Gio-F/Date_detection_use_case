@@ -144,6 +144,10 @@ class Routes():
 
         @app.get("/",response_class=HTMLResponse)
         async def index(request:Request):
+            """
+            This function is the main route of this web application.
+            It will lead the index.html webpage
+            """
             print("loading index")
             context = {"request":request}
             return templates.TemplateResponse("index.html",context)
@@ -151,6 +155,9 @@ class Routes():
 
         @app.get("/camera/",response_class=HTMLResponse)
         async def my_camera(request:Request):
+            """
+            This function is the root of the camera and lead to camera.html webpage
+            """
             print("loading camera web page")
             context = {"request":request}
             return templates.TemplateResponse("camera.html",context)
@@ -158,6 +165,9 @@ class Routes():
 
         @app.get("/my_api/",response_class=HTMLResponse)
         async def my_api(request:Request):
+            """
+            This function is the root of the api and lead to my_api.html webpage
+            """
             print("loading my_api web page")
             context = {"request":request}
             return templates.TemplateResponse("my_api.html",context)
@@ -165,6 +175,9 @@ class Routes():
 
         @app.get("/picture/",response_class=HTMLResponse)
         async def picture(request:Request):
+            """
+            This function is the root of the picture and lead to picture.html webpage
+            """
             print("loading picture")
             self.source_filename = None
             context = {"request":request}
@@ -173,6 +186,10 @@ class Routes():
 
         @app.get("/options/",response_class=HTMLResponse)
         async def options(request:Request):
+            """
+            This function is the root of the picture and lead to picture.html webpage
+            Deactivated for now
+            """
             print("loading options")
             context = {"request":request}
             return templates.TemplateResponse("options.html",context)
