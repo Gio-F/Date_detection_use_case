@@ -4,7 +4,7 @@
 {% block content%}
 <h1 style="color:white">Your picture</h1>
 <div class="card" style="width: 35rem;">
-    <img src="../static/Images/picture2.jpg" id="my-loaded-image" class="card-img-top" alt="no image">
+    <img src="../static/Images/{{ source_filename }}" id="my-loaded-image" class="card-img-top" alt="no image">
     <div class="card-body">
       <h5 class="card-title">Text detection</h5>
       <p class="card-text">File : {{ filename }}</p>

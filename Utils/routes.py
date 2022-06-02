@@ -17,8 +17,7 @@ import numpy as np
 import main as m
 import json
 import base64
-from io import BytesIO
-
+import os
 
 class Routes():
 
@@ -366,11 +365,13 @@ class Routes():
             tobytes = jpeg.tobytes()
             print("tobytes : ",type(tobytes))
             filename = "picture1.jpg"
+            print("Image size : ",image2.size)
+            self.source_filename = filename
             self.image = image2 #detect_date() need self.image
             root = "/static/Images/"
             path = root + filename
             print("path : ",path)
-            cv2.imwrite(path,image2)
+            cv2.imwrite("./static/Images/" + self.source_filename,image2)
             print("Picture saved in 'picture1.jpg'")
             self.detect_date()
             context = {"request":request}
@@ -378,6 +379,7 @@ class Routes():
             context["prediction"] = self.prediction
             context["time_prediction"] = round(float(self.time_prediction),2)
             context["image"] = image2
+            context["source_filename"] = self.source_filename
             return templates.TemplateResponse("detected.html",context)
 
         

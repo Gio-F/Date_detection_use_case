@@ -81,7 +81,14 @@ class Stream(object):
     def get_real_frame(self):
         ret,image = self.stream.read()
         if ret == True:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            width, height = image.size
+            print(width, height)
+            left = width / 3
+            top = 4 * height / 10
+            right = 2 * width/3
+            bottom = 6 * height / 10
+            image = image.crop((left, top, right, bottom))
+
             self.text = detect2(image)
             ret,jpeg = cv2.imencode(".jpg",image)
             if ret == True:
@@ -152,7 +159,7 @@ class Webcam():
             elif type_image == "video_frame":
                 frame = stream.get_real_frame()
 
-
+                
             try:
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
                 bytearray(frame) + b'\r\n')
