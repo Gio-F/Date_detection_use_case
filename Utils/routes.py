@@ -31,10 +31,9 @@ class Routes():
         self.webcam3 = None # Webcam3 for the stream using the class Webcam in the Utils folder
         self.webcam4 = None # Webcam4 for the stream using the class Webcam in the Utils folder
         self.webcam5 = None # Webcam5 for the stream using the class Webcam in the Utils folder
-        self.image = None 
+        self.image = None # this content the image from the picture and will be used for the prediction
         self.requests = None # Request from the frontend
         self.stream = None # Stream of the webcam using the class Stream in the Utils folder
-        self.pages = None 
         self.switch = True # Switch for the stream
         self.filename = None # Filename of the image that is uploaded
         self.prediction = None # Prediction of the image showing the expire date of the image
@@ -107,7 +106,6 @@ class Routes():
         """
         Call the function that detect the date of the image.
         """
-        #print("PRED:",m.main(self.image))
         self.prediction,self.time_prediction = m.main(self.image)
         print("PREDICTION:",self.prediction)
         print("TIME PREDICTION:",self.time_prediction)
@@ -199,7 +197,13 @@ class Routes():
 
         
         @app.post("/take_picture/")
-        async def take_picture():         
+        async def take_picture():  
+            """
+            This route is called when we send the picture that we select  
+            in the picture web page. It will load the picture and detect
+            the expired date 
+            This function is called from brython (/static/Brython/base.py)
+            """       
             self.stream.save_picture()
             picture = "./picture2.jpg"
             self.image,jpg = self.stream.load_picture(picture)
@@ -208,7 +212,13 @@ class Routes():
             return text
 
         @app.post("/take_picture_camera/")
-        async def take_picture_camera():         
+        async def take_picture_camera():    
+            """
+            This route is called when we press the button take a picture 
+            in the camera web page. It will load the picture and detect
+            the expired date.This function is called from brython 
+            (/static/Brython/base.py)
+            """       
             self.stream.save_picture_camera()
             picture = "./picture1.jpg"
             self.image,jpg = self.stream.load_picture(picture)
@@ -218,6 +228,10 @@ class Routes():
 
         @app.post("/load_picture/")
         async def load_picture(message:Message):
+            """
+            This function is called from brython (/static/Brython/base.py)
+            to load a picture with the name of the file
+            """
             file_name = message
             self.image = self.stream.load_picture(file_name)
             print("Request loaded image")
@@ -225,6 +239,10 @@ class Routes():
 
         @app.get("/video_original/",response_class=HTMLResponse)
         def video_original(request:Request):
+            """
+            This route is the video stream of the first video. The original one on
+            the camera web page
+            """
             print("webcam : ",self.webcam.get_switch_webcam())
             return StreamingResponse(self.webcam.generate(self.stream,"original"),
             media_type="multipart/x-mixed-replace;boundary=frame"
@@ -233,14 +251,22 @@ class Routes():
 
         @app.get("/video_gray/",response_class=HTMLResponse)
         def video_gray(request:Request):
-                print("webcam2 : ",self.webcam2.get_switch_webcam())
-                return StreamingResponse(self.webcam2.generate(self.stream,"gray"),
-                media_type="multipart/x-mixed-replace;boundary=frame"
-                )
+            """
+            This route is the video stream of the second video. The gray one on
+            the camera web page
+            """
+            print("webcam2 : ",self.webcam2.get_switch_webcam())
+            return StreamingResponse(self.webcam2.generate(self.stream,"gray"),
+            media_type="multipart/x-mixed-replace;boundary=frame"
+            )
 
 
         @app.get("/video_blurr/",response_class=HTMLResponse)
         def video_blurr(request:Request):
+            """
+            This route is the video stream of the third video. The blurr one on
+            the camera web page
+            """
             print("webcam3 : ",self.webcam3.get_switch_webcam())
             return StreamingResponse(self.webcam3.generate(self.stream,"blurr"),
             media_type="multipart/x-mixed-replace;boundary=frame"
@@ -249,6 +275,10 @@ class Routes():
 
         @app.get("/video_thresold/",response_class=HTMLResponse)
         def video_thresold(request:Request):
+            """
+            This route is the video stream of the fourth video. The thresold one on
+            the camera web page
+            """
             print("webcam4 : ",self.webcam4.get_switch_webcam())
             return StreamingResponse(self.webcam4.generate(self.stream,"thresold"),
             media_type="multipart/x-mixed-replace;boundary=frame"
@@ -257,6 +287,10 @@ class Routes():
 
         @app.get("/video_frame/",response_class=HTMLResponse)
         def video_frame(request:Request):
+            """
+            This route is the video stream of the fifth video. Not in 
+            the camera web page right now
+            """
             print("webcam5 : ",self.webcam5.get_switch_webcam())
             self.text = self.stream.get_text()
             return StreamingResponse(self.webcam5.generate(self.stream,"video_frame"),
