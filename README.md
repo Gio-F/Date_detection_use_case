@@ -15,7 +15,6 @@ An API that detect expiration date from the product package's picture based on D
 ## Installation
   
 - Python 3.8.10
-- Python 3.9.5 
 - Open CV
 - Torch
 - Fast API
