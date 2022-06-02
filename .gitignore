@@ -127,3 +127,19 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+env-api-delhaize/
+Utils/data/
+data/
+picture.jpg
+test.py
+test2.py
+test3.py
+test4.py
+static/Images/picture2.jpg
+static/Images/picture1.jpg
+DAN/
+DMY/
+FCOS/
+res.png
