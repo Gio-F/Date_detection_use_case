@@ -39,7 +39,7 @@ def main():
             if cv2.waitKey(1) == 27:
                 break
 
-    cap.release()
+    cam.release()
     cv2.destroyAllWindows()
 
 
