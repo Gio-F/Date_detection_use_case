@@ -1,3 +1,4 @@
+from re import X
 import cv2
 from Utils.ocr import detect2
 import numpy as np
@@ -21,8 +22,6 @@ class Stream(object):
     def start(self):
         print("start streaming of camera")
         self.stream = cv2.VideoCapture(-1)
-    
-        
 
     def stop(self):
         self.stream.release()
@@ -42,13 +41,21 @@ class Stream(object):
             print("failed to save picture. Could not read image (self.stream.read())")
 
     def save_picture_camera(self):
-        print("save picture camera function")
-        cv2.imwrite("../static/Images/picture1.jpg",self.frame)
-        print("Picture saved!")
-        self.stop()
+        ret,image = self.stream.read()
+        image = self.resize_image(image)
+        print(ret)
+        if ret == True:
+            image = cv2.imdecode(np.frombuffer(image, np.uint8),cv2.IMREAD_COLOR)
+            cv2.imwrite("../static/Images/picture1.jpg",image)
+            print("Picture saved!")
+            self.stop()
+        else:
+            print("failed to save picture. Could not read image (self.stream.read())")
     
+    def read_stream(self):
+        ret,image = self.stream.read()
+        return ret,image
 
-    
     def load_picture(self,picture):
         print("load picture")
         image = cv2.imread(picture)
@@ -57,6 +64,8 @@ class Stream(object):
         if ret == True:
             return image,jpeg.tobytes()
         else:
+            #print("failed to read load_picture")
+            pass
             print("failed to read load_picture")
     
     def get_frame(self):
@@ -66,19 +75,35 @@ class Stream(object):
             if ret == True:
                 return jpeg.tobytes()
         else:
-            print("failed to read get_frame")
-    
+            #print("failed to read get_frame")
+            pass
+    def resize_image(self,image):
+        """
+        this function will crop a part of the original image
+        """
+        #image = cv2.flip(image,1) # already flipped so we dont need to flip again
+        #480x640
+        height = image.shape[0]
+        width = image.shape[1]
+        left = 2 * width / 10
+        top = 4 * height / 10
+        right = 8 * width/10
+        bottom = 5 * height / 10
+        image = image[int(top):int(bottom),int(left):int(right)]
+        image = cv2.resize(image,(640,380)) # then resize it again to fit the screen
+        return image
+
     def get_real_frame(self):
         ret,image = self.stream.read()
+        image = self.resize_image(image)
         if ret == True:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            self.text = detect2(image)
             ret,jpeg = cv2.imencode(".jpg",image)
             if ret == True:
                 return jpeg.tobytes()
         else:
-            print("failed to read get_real_frame")
-    
+            #print("failed to read get_real_frame")
+            pass
+ 
     def get_gray_frame(self):
         ret,image = self.stream.read()
         if ret == True:
@@ -87,7 +112,9 @@ class Stream(object):
             if ret == True:
                 return jpeg.tobytes()
         else:
-            print("failed to read get_gray_frame")
+            #print("failed to read get_gray_frame")
+            pass
+
 
     def get_blurr_frame(self):
         ret,image = self.stream.read()
@@ -98,7 +125,8 @@ class Stream(object):
             if ret == True:
                 return jpeg.tobytes()
         else:
-            print("failed to read get_blurr_frame")
+            #print("failed to read get_blurr_frame")
+            pass
 
 
     def get_thresold_frame(self):
@@ -111,8 +139,8 @@ class Stream(object):
             if ret == True:
                 return jpeg.tobytes()
         else:
-            print("failed to read get_thresold_frame")
-
+            #print("failed to read get_thresold_frame")
+            pass
 
 class Webcam():
     def __init__(self):
@@ -139,10 +167,10 @@ class Webcam():
             elif type_image == "video_frame":
                 frame = stream.get_real_frame()
 
-            self.frame = frame
-
             try:
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
                 bytearray(frame) + b'\r\n')
             except:
-                print("Error - FAILED TO GET FRAME")
+                #print("Error - FAILED TO GET FRAME")
+                pass
+

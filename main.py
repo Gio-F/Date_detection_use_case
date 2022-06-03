@@ -13,6 +13,7 @@ import numpy as np
 
 if getattr(sys, 'frozen', False):
     path = Path(sys._MEIPASS)
+
 else:
     path = Path(__file__).parent
 args, cfg_fcos = fcos_cfgs(path)

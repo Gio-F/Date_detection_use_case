@@ -3,9 +3,6 @@ from browser import document,html,ajax,bind
 import json
 from typing import Dict
 
-
-
-
 print("Brython activated!!!!!")
 print("Javascript = NO THANKS")
 
@@ -32,9 +29,7 @@ class Picture():
         request1 = self.request1
         request1.bind('complete',self.on_complete)
         request1.open('POST',"/file_image/",True)
-        path_filename = document["formFileLg"].value
-        #print(path_filename)
-        #file = {'file': open(path_filename, 'rb')}
+
         request1.send()
         print("Picture received")
     
@@ -79,57 +74,6 @@ class Switch_boutton():
             pass
 
 
-class Stream_state():
-    def __init__(self):
-        print("Initializing switch_boutton") 
-        print("start ajax stream")
-        self.request4 = ajax.Ajax()
-
-
-    def load(self,path):
-        print("start function stream")
-        print("stream the path:",path)
-        url4 = path
-        self.request4.bind('complete', self.on_complete)
-        self.request4.open('GET', url4, True)
-        self.request4.send()
-        print("Getting stream")
-
-    def on_complete(request4):
-        print("On complete stream")
-        print("Request status = ",request4.status)
-        if request4.status == 200 or request4.status == 0:
-            print("stream of the path:",request4.responseText," of this path complete")
-        else:
-            print("Request status = ",request4.status)
-            print("Request text = ",request4.text)
-            print("STREAM ERROR")   
-
-class Reboot():
-    def __init__(self):
-        print("Reboot activated")
-        self.request5 = ajax.Ajax()
-
-
-    def start(self):
-        print("start function start")
-        url = "/reboot/"
-        self.request5.bind('complete', self.on_complete)
-        self.request5.open('POST', url, True)
-        self.request5.set_header('content-type', 'application/json')
-        response = json.dumps({"state":"true"})
-        self.request5.send(response)
-        print("response = ",response)
-        print("!!!!!!!SEND!!!!!!!")
-        print("Starting reboot")
-    
-    def on_complete(request5):
-        print("On complete start")
-        if request5.status == 200 or request5.status == 0:
-            print("START COMPLETE")
-        elif request5.status == 422:
-            pass
-
 
 class Camera():
     def __init__(self):
@@ -140,7 +84,6 @@ class Camera():
     def shoot(self):
         print("start function shoot")
         url2 = "/take_picture/"
-        self.request.bind('complete', self.on_complete)
         self.request.open('POST', url2, True)
         self.request.set_header('content-type', 'application/json')
         self.request.send()
@@ -148,8 +91,9 @@ class Camera():
 
     def shoot_camera(self):
         print("start function shoot")
-        url2 = "/take_picture_camera/"
-        self.request.open('POST', url2, True)
+        url6 = "/take_picture_camera/"
+        self.request.open('POST', url6, True)
+
         self.request.set_header('content-type', 'application/json')
         self.request.send()
         print("!!!!!!!SEND!!!!!!!")
@@ -161,20 +105,12 @@ class Camera():
         self.request.send()
         print("!!!!!!!SEND!!!!!!!")
             
-    def on_complete(request):
-        print("On complete shoot")
-        if request.status == 200 or request.status == 0:
-            pass
-
-        elif request.status == 422:
-            document["text_to_show"].html = request.text
-        else:
-            document["text_to_show"].html = "error " + request.text
 
 
 def change_button():
     print("Change the button")
-    document["button-load-image"].text = "Loading..."
+    document["button-load-image"].text = "processing..."
+
    
 
 
