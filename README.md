@@ -28,4 +28,3 @@ An API that detect expiration date from the product package's picture based on D
 
   
   <p align="center"><img src="https://user-images.githubusercontent.com/96992159/171581686-abe8d723-a103-4a03-b9c7-2a2f6543fd04.png" width="800" height="400"></p>
-
