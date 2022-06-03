@@ -80,16 +80,16 @@ class Stream(object):
     
     def get_real_frame(self):
         ret,image = self.stream.read()
+        image = cv2.flip(image,1)
+        #480x640
+        height = image.shape[0]
+        width = image.shape[1]
+        left = width / 10
+        top = 4 * height / 10
+        right = 2 * width/10
+        bottom = 6 * height / 10
+        image = image[int(top):int(bottom),int(left):int(right)]
         if ret == True:
-            width, height = image.size
-            print(width, height)
-            left = width / 3
-            top = 4 * height / 10
-            right = 2 * width/3
-            bottom = 6 * height / 10
-            image = image.crop((left, top, right, bottom))
-
-            self.text = detect2(image)
             ret,jpeg = cv2.imencode(".jpg",image)
             if ret == True:
                 return jpeg.tobytes()
