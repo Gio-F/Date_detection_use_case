@@ -18,6 +18,12 @@ import main as m
 import json
 import base64
 import os
+from Utils import results
+from Utils.results import Result
+from Utils.database import SessionLocal,engine,sessionmaker
+import Utils.database
+
+
 
 class Routes():
 
@@ -25,6 +31,7 @@ class Routes():
         self.app = FastAPI()
         self.app.mount("/static", StaticFiles(directory="./static"), name="static") #that is the only way in fastapi to serve static files
         self.templates = Jinja2Templates(directory="templates") # Load templates using Jinja2 for the frontend
+        results.Base.metadata.create_all(bind=engine)
         self.webcam = None # Webcam for the stream using the class Webcam in the Utils folder
         self.webcam2 = None # Webcam2 for the stream using the class Webcam in the Utils folder
         self.webcam3 = None # Webcam3 for the stream using the class Webcam in the Utils folder
@@ -38,7 +45,13 @@ class Routes():
         self.prediction = None # Prediction of the image showing the expire date of the image
         self.time_prediction = None # Time prediction of the image showing the expire date of the image
         self.source_filename = None # filename of the image that is uploaded via picture link
-       
+    
+    def get_db():
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
 
     def create(self):
         print("Create main routes")
@@ -179,6 +192,23 @@ class Routes():
             self.source_filename = None
             context = {"request":request}
             return templates.TemplateResponse("picture.html",context)
+
+
+        @app.get("/database/",response_class=HTMLResponse)
+        async def picture(request:Request):
+            """
+            This function is the root of the picture and lead to database.html webpage
+            """
+            print("loading picture")
+            self.source_filename = None
+            # my_worker.name = Result
+            # print("my_worker.name : ",my_worker.name)
+            # print("worker_request.name: ",worker_request.name)
+            # db.add(my_worker)
+            # db.commit()
+            
+            context = {"request":request}
+            return templates.TemplateResponse("database.html",context)
 
 
         @app.get("/options/",response_class=HTMLResponse)
