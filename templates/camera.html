@@ -14,31 +14,28 @@
               </div>
             </div>
             <div class="card">
+                <br>
+                <br>
+                <br>
                 <img class="card-img" src="{{ url_for('video_frame') }}">
               <div class="card-body">
-                <h5 class="card-title">Gray</h5>
-                <p class="card-text">This image is not process</p>
+                <h5 class="card-title">ZOOM</h5>
+                <p class="card-text">This part will be process</p>
               </div>
             </div>
-            <div class="card">
-                <img class="card-img" src="{{ url_for('video_blurr') }}">
-              <div class="card-body">
-                <h5 class="card-title">Blurr</h5>
-                <p class="card-text">This image is process in gray and blurred</p>
-              </div>
-            </div>
+            
             <div class="card">
                 <img class="card-img" src="{{ url_for('video_thresold') }}">
                 <div class="card-body">
-                  <h5 class="card-title">Thresold</h5>
-                  <p class="card-text">This image is grayed, blurred and use thresold</p>
+                  <h5 class="card-title">threshold</h5>
+                  <p class="card-text">This image is grayed, blurred and use threshold</p>
                 </div>
               </div>
           </div>
           <div class="card" style="width:20rem;">
             
             <div id="card_text" class="card-body">
-              <h5 class="card-title">Real Frame</h5>
+              <h5 class="card-title">Detect the expired date</h5>
               <p id="text_to_show" class="card-text"></p>
               <!-- <button id="my_button_picture" class="btn btn-danger">Take a picture</button> -->
               <form action="/show_picture" method="post" enctype="multipart/form-data">

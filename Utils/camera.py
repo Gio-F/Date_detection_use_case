@@ -43,6 +43,7 @@ class Stream(object):
 
     def save_picture_camera(self):
         ret,image = self.stream.read()
+        image = self.resize_image(image)
         print(ret)
         if ret == True:
             image = cv2.imdecode(np.frombuffer(image, np.uint8),cv2.IMREAD_COLOR)
@@ -77,18 +78,25 @@ class Stream(object):
         else:
             #print("failed to read get_frame")
             pass
-    
-    def get_real_frame(self):
-        ret,image = self.stream.read()
-        image = cv2.flip(image,1)
+    def resize_image(self,image):
+        """
+        this function will crop a part of the original image
+        """
+        #image = cv2.flip(image,1) # already flipped so we dont need to flip again
         #480x640
         height = image.shape[0]
         width = image.shape[1]
-        left = width / 10
+        left = 2 * width / 10
         top = 4 * height / 10
-        right = 2 * width/10
-        bottom = 6 * height / 10
+        right = 8 * width/10
+        bottom = 5 * height / 10
         image = image[int(top):int(bottom),int(left):int(right)]
+        image = cv2.resize(image,(640,380)) # then resize it again to fit the screen
+        return image
+
+    def get_real_frame(self):
+        ret,image = self.stream.read()
+        image = self.resize_image(image)
         if ret == True:
             ret,jpeg = cv2.imencode(".jpg",image)
             if ret == True:

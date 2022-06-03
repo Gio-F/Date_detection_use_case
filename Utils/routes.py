@@ -248,28 +248,28 @@ class Routes():
             )
 
 
-        @app.get("/video_gray/",response_class=HTMLResponse)
-        def video_gray(request:Request):
-            """
-            This route is the video stream of the second video. The gray one on
-            the camera web page
-            """
-            print("webcam2 : ",self.webcam2.get_switch_webcam())
-            return StreamingResponse(self.webcam2.generate(self.stream,"gray"),
-            media_type="multipart/x-mixed-replace;boundary=frame"
-            )
+        # @app.get("/video_gray/",response_class=HTMLResponse)
+        # def video_gray(request:Request):
+        #     """
+        #     This route is the video stream of the second video. The gray one on
+        #     the camera web page
+        #     """
+        #     print("webcam2 : ",self.webcam2.get_switch_webcam())
+        #     return StreamingResponse(self.webcam2.generate(self.stream,"gray"),
+        #     media_type="multipart/x-mixed-replace;boundary=frame"
+        #     )
 
 
-        @app.get("/video_blurr/",response_class=HTMLResponse)
-        def video_blurr(request:Request):
-            """
-            This route is the video stream of the third video. The blurr one on
-            the camera web page
-            """
-            print("webcam3 : ",self.webcam3.get_switch_webcam())
-            return StreamingResponse(self.webcam3.generate(self.stream,"blurr"),
-            media_type="multipart/x-mixed-replace;boundary=frame"
-            )
+        # @app.get("/video_blurr/",response_class=HTMLResponse)
+        # def video_blurr(request:Request):
+        #     """
+        #     This route is the video stream of the third video. The blurr one on
+        #     the camera web page
+        #     """
+        #     print("webcam3 : ",self.webcam3.get_switch_webcam())
+        #     return StreamingResponse(self.webcam3.generate(self.stream,"blurr"),
+        #     media_type="multipart/x-mixed-replace;boundary=frame"
+        #     )
 
 
         @app.get("/video_thresold/",response_class=HTMLResponse)
@@ -371,6 +371,7 @@ class Routes():
             root = "/static/Images/"
             path = root + filename
             print("path : ",path)
+            image2 = self.stream.resize_image(image2)
             cv2.imwrite("./static/Images/" + self.source_filename,image2)
             print("Picture saved in 'picture1.jpg'")
             self.detect_date()
