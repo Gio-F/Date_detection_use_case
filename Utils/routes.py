@@ -11,6 +11,7 @@ from Utils.ocr import detect2
 from Utils.validation import Message
 from Utils.camera import Webcam
 from Utils.camera import Stream
+
 from Utils.validation import Switch
 import cv2
 import numpy as np
@@ -18,6 +19,7 @@ import main as m
 import json
 import base64
 import os
+
 
 class Routes():
 
@@ -39,6 +41,7 @@ class Routes():
         self.time_prediction = None # Time prediction of the image showing the expire date of the image
         self.source_filename = None # filename of the image that is uploaded via picture link
        
+
 
     def create(self):
         print("Create main routes")
@@ -105,6 +108,7 @@ class Routes():
         """
         Call the function that detect the date of the image.
         """
+
         self.prediction,self.time_prediction = m.main(self.image)
         print("PREDICTION:",self.prediction)
         print("TIME PREDICTION:",self.time_prediction)
@@ -145,6 +149,7 @@ class Routes():
             This function is the main route of this web application.
             It will lead the index.html webpage
             """
+
             print("loading index")
             context = {"request":request}
             return templates.TemplateResponse("index.html",context)
@@ -165,6 +170,7 @@ class Routes():
             """
             This function is the root of the api and lead to my_api.html webpage
             """
+
             print("loading my_api web page")
             context = {"request":request}
             return templates.TemplateResponse("my_api.html",context)
@@ -175,6 +181,7 @@ class Routes():
             """
             This function is the root of the picture and lead to picture.html webpage
             """
+
             print("loading picture")
             self.source_filename = None
             context = {"request":request}
@@ -187,6 +194,7 @@ class Routes():
             This function is the root of the picture and lead to picture.html webpage
             Deactivated for now
             """
+
             print("loading options")
             context = {"request":request}
             return templates.TemplateResponse("options.html",context)
@@ -324,10 +332,11 @@ class Routes():
         print("Stream loaded")
 
 
+
         @app.post("/file_image/")
         def file(filename):
             cv2.imread(filename)
-            
+
             return {"file_name":filename}
 
         @app.post("/submitform",response_class=HTMLResponse)
@@ -335,14 +344,17 @@ class Routes():
             print("type of file : ",my_picture_file.content_type)
             print("name of the file : ",my_picture_file.filename)
 
+
             file = await my_picture_file.read()
             print("type of file : ",type(file))
             print("my_picture_file: ",type(my_picture_file))
+
             self.source_filename = "picture2.jpg"
             image = cv2.imdecode(np.frombuffer(file, np.uint8),cv2.IMREAD_COLOR)
             cv2.imwrite("./static/Images/" + self.source_filename,image)
             print("Picture saved in 'picture2.jpg'")
             print("TYPE OF IMAGE : ",type(image))
+
             self.image = image
             self.detect_date()
             context = {"request":request}
@@ -374,6 +386,7 @@ class Routes():
             image2 = self.stream.resize_image(image2)
             cv2.imwrite("./static/Images/" + self.source_filename,image2)
             print("Picture saved in 'picture1.jpg'")
+
             self.detect_date()
             context = {"request":request}
             context["filename"] = filename
@@ -384,6 +397,7 @@ class Routes():
             return templates.TemplateResponse("detected.html",context)
 
         
+
 
         @app.post("/API")
         async def api(file:bytes=File()):
@@ -396,4 +410,4 @@ class Routes():
             context["time_prediction"] = round(float(self.time_prediction),2)
             print(context)
             return context
-      
+

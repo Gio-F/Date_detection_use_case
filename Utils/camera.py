@@ -22,8 +22,7 @@ class Stream(object):
     def start(self):
         print("start streaming of camera")
         self.stream = cv2.VideoCapture(-1)
-    
-        
+
     def stop(self):
         self.stream.release()
         cv2.destroyAllWindows()
@@ -57,7 +56,6 @@ class Stream(object):
         ret,image = self.stream.read()
         return ret,image
 
-
     def load_picture(self,picture):
         print("load picture")
         image = cv2.imread(picture)
@@ -68,6 +66,7 @@ class Stream(object):
         else:
             #print("failed to read load_picture")
             pass
+            print("failed to read load_picture")
     
     def get_frame(self):
         ret,image = self.stream.read()
@@ -104,7 +103,7 @@ class Stream(object):
         else:
             #print("failed to read get_real_frame")
             pass
-    
+ 
     def get_gray_frame(self):
         ret,image = self.stream.read()
         if ret == True:
@@ -115,6 +114,7 @@ class Stream(object):
         else:
             #print("failed to read get_gray_frame")
             pass
+
 
     def get_blurr_frame(self):
         ret,image = self.stream.read()
@@ -128,6 +128,7 @@ class Stream(object):
             #print("failed to read get_blurr_frame")
             pass
 
+
     def get_thresold_frame(self):
         ret,image = self.stream.read()
         if ret == True:
@@ -140,7 +141,6 @@ class Stream(object):
         else:
             #print("failed to read get_thresold_frame")
             pass
-
 
 class Webcam():
     def __init__(self):
@@ -167,10 +167,10 @@ class Webcam():
             elif type_image == "video_frame":
                 frame = stream.get_real_frame()
 
-                
             try:
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +
                 bytearray(frame) + b'\r\n')
             except:
                 #print("Error - FAILED TO GET FRAME")
                 pass
+

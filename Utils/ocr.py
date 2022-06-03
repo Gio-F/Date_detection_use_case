@@ -9,6 +9,7 @@ def detect(img):
     confidence in the detection of each word.
     Then do the mean of every word to get the mean confidence of the detection
     """
+
     print("Start the OCR...")
     #text = pytesseract.image_to_string(img)
     data = pytesseract.image_to_data(img, output_type='data.frame')
@@ -48,6 +49,7 @@ def detect2 (img):
     This function is a lighter version of the function detect. Only the the ocr part 
     without the level of confidence for testing purpose
     """
+
     print("Start the OCR...")
     text = pytesseract.image_to_string(img)
     print("image processed")

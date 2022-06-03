@@ -13,12 +13,9 @@ import numpy as np
 
 if getattr(sys, 'frozen', False):
     path = Path(sys._MEIPASS)
-    print(path)
+
 else:
     path = Path(__file__).parent
-    print(path)
-num_gpus = torch.cuda.device_count()
-print('# of GPUs: {}'.format(num_gpus))
 args, cfg_fcos = fcos_cfgs(path)
 models = load_networks(path)
 detect_rec_dmy = DetectRecognizeDmy(models)
